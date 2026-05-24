@@ -1,0 +1,178 @@
+Product Requirements Document (PRD) — Legalese
+
+1. Executive Summary
+- Vision: Legalese helps legal teams upload, search, and interrogate contracts and legal documents using an accurate, auditable, and privacy-first AI assistant.
+- One-line value proposition: "Find answers in your legal documents in seconds, with citations and risk signals."
+
+2. Goals & Success Metrics
+- Product goals:
+  - Reliable, secure ingestion and storage of legal documents (PDF-first).
+  - High-quality semantic search (retrieval) with clear source citations.
+  - Fast, human-readable answers, context-aware summaries, and automated risk highlights.
+- Key success metrics (example targets):
+  - Ingestion throughput: 100 documents/hour per worker (baseline: 50).
+  - Retrieval precision@5 ≥ 0.8 on gold corpus.
+  - Average 95th-percentile query latency < 2.5s.
+  - Pilot Net Promoter Score ≥ 30 and user satisfaction ≥ 4/5.
+
+3. Target Audience & Personas
+- Primary users:
+  - In-house counsel: quick contract review and risk spotting.
+  - Paralegals: find clauses, assemble exhibits, and create summaries.
+  - Small-firm lawyers: fast Q&A across multiple documents.
+- Personas (short):
+  - "Aisha, In-house counsel": needs rapid clause discovery and redlines.
+  - "Marco, Paralegal": needs batch ingestion and searchable notes.
+
+4. Problem Statement
+- Legal teams spend too much time manually searching and summarizing documents. Current search (keyword) is brittle; teams need semantic understanding, sourceable answers, and a trusted audit trail.
+
+5. Product Scope (v1)
+- In-scope:
+  - PDF upload (web + API), OCR fallback, text extraction, chunking.
+  - Embeddings pipeline, vector index (Chroma local / external optional), similarity search.
+  - QA API that returns answer text, confidence, and highlighted source snippets with file/offset citations.
+  - Per-user (and per-organization) storage segregation and simple auth.
+  - Basic UI flows: upload, ingestion monitor, query UI, view sources.
+- Out-of-scope (v1):
+  - Enterprise SSO, advanced RBAC, or on-prem installer packaging.
+
+6. High-Level User Flows
+
+User flow: upload → process → query
+
+```mermaid
+flowchart TD
+  A[User selects PDF(s)] --> B[Upload API]
+  B --> C{Store original}
+  C --> D[Text extraction + OCR]
+  D --> E[Chunking & metadata]
+  E --> F[Embeddings]
+  F --> G[Vector index]
+  G --> H[Ready for search]
+  H --> I[User issues query]
+  I --> J[Retrieve top-K]
+  J --> K[Answer synth + citations]
+  K --> L[Return response to user]
+```
+
+7. System Architecture (visual)
+
+```mermaid
+graph TD
+  subgraph Client
+    UI[Web UI]
+    CLI[API Client]
+  end
+  subgraph Backend
+    API[FastAPI/HTTP API]
+    Worker[Ingest Worker]
+    EmbeddingSvc[Embedding Provider]
+    VectorDB[Chroma / Vector DB]
+    Storage[Blob Store / local storage]
+    DB[(Postgres / SQLite metadata)]
+  end
+  UI --> API
+  CLI --> API
+  API --> Worker
+  Worker --> Storage
+  Worker --> EmbeddingSvc
+  EmbeddingSvc --> VectorDB
+  API --> VectorDB
+  API --> DB
+```
+
+8. Functional Requirements (detailed)
+- Ingestion
+  - `/upload` API: accept PDF, return ingestion id; store original in `storage/`.
+  - Extraction job: extract text pages, run OCR if needed, normalize whitespace.
+  - Chunking: consistent chunk size (e.g., 500 tokens / 200–800 characters) with overlap and per-chunk source pointers (file, page, begin/end offsets).
+- Embedding & Indexing
+  - Batch embeddings with concurrency limits; retry on transient embedding-provider errors.
+  - Store embeddings in Vector DB with chunk-level metadata.
+- Search & QA
+  - `/query` API: accepts query and optional doc filter; returns ranked answers, top-K chunks (with similarity scores) and synthesized answer with provenance.
+  - Provide `explain` flag to surface underlying chunks and confidence scores for audit.
+- User Management & Security
+  - JWT-based auth for API and simple session for UI.
+  - Per-user / per-tenant isolation for indexes and storage.
+
+9. Non-Functional Requirements
+- Security
+  - TLS everywhere; secrets in environment variables and vault-compatible storage.
+  - At-rest encryption for stored files and DB (as supported by host).
+  - Audit logs for ingestion and query operations.
+- Performance & Reliability
+  - Horizontal worker scaling; instrument ingress/egress metrics.
+  - Graceful retry/backoff for external providers.
+- Observability
+  - Health endpoints, ingestion queue metrics, index size, and query latency histograms.
+
+10. Data & Privacy
+- Retention: configurable per-org; default 90 days for temp indexes unless user marks persistent.
+- Deletion: support immediate purge of docs and associated vectors on user request.
+
+11. API Surface (examples)
+- POST `/api/v1/upload` — multipart `file`; returns `{ ingestion_id }`.
+- GET `/api/v1/ingestion/{id}` — ingestion status and logs.
+- POST `/api/v1/query` — `{ q: string, doc_id?: string, top_k?: number }` → `{ answer, sources: [{doc, page, snippet, score}], raw_chunks }`.
+
+12. Data Model (simplified)
+
+```mermaid
+erDiagram
+  DOCUMENTS ||--o{ CHUNKS : contains
+  DOCUMENTS {
+    string id PK
+    string owner_id
+    string filename
+    datetime uploaded_at
+  }
+  CHUNKS {
+    string id PK
+    string document_id FK
+    int page
+    int start_offset
+    int end_offset
+    string text
+    vector embedding
+  }
+```
+
+13. UX / UI Notes
+- Query UI: top answer with confidence + 'Show Sources' button that expands to list of chunks with file/page/snippet and link to download original.
+- Ingestion dashboard: shows queue, ingestion time, error messages, and retry button.
+
+14. Roadmap & Milestones
+- M1 (4 weeks): Core ingestion, embeddings pipeline, vector index, basic UI, auth.
+- M2 (8 weeks): Improved QA prompts, auditability, pagination & filtering, export functionality.
+- M3 (12+ weeks): SSO, RBAC, admin console, enterprise readiness.
+
+15. Operational Runbook (short)
+- Monitor `ingestion_queue_depth` and `query_latency_p95`.
+- If ingestion fails repeatedly: inspect worker logs, check embedding provider rate limits and storage availability.
+
+16. Risks & Mitigations
+- Embedding costs: mitigate with batching, open-source models, and cost caps per org.
+- Incorrect answers / hallucinations: provide provenance, human-in-the-loop verification, and conservative answer templates showing sources.
+
+17. Open Questions
+- Which embedding provider(s) do we target for v1? (OpenAI, Azure, local models)
+- Retention policy and export/archival requirements per customer?
+
+Appendix
+- Quick local dev notes:
+
+```bash
+# Start backend (venv)
+python -m venv .venv
+.venv\\Scripts\\activate
+pip install -r backend/requirements.txt
+uvicorn backend.app.main:app --reload
+```
+
+- Design mockups: add placeholder images to `frontend/src/assets/mockups/` and link them in UI.
+
+Contact: Product owner for prioritization and acceptance criteria.
+
+-- End of PRD --
