@@ -1,0 +1,19 @@
+node_modules
+.dist
+.env
+.env.*
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.venv
+venv
+frontend/dist
+backend/.venv
+backend/__pycache__
+*.log
+.DS_Store
+# Local persistence and uploads
+backend/chroma_data/
+backend/storage/

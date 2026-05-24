@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: #111111;
+  --bg-soft: #161616;
+  --panel: rgba(24, 24, 24, 0.94);
+  --panel-strong: #1d1d1d;
+  --line: rgba(255, 255, 255, 0.09);
+  --text: #f0f0f0;
+  --muted: rgba(240, 240, 240, 0.64);
+  --muted-strong: rgba(240, 240, 240, 0.82);
+  --accent: #f2f2f2;
+  --accent-soft: #bdbdbd;
+  --shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.1), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.05), transparent 30%),
+    var(--bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%),
+    var(--bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+@layer components {
+  .app-shell {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-shell::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at 50% 20%, black 0, transparent 75%);
+    opacity: 0.35;
+  }
+
+  .display-font {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.03em;
+  }
+
+  .glass-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .subtle-panel {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+  }
+
+  .field {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+    border-radius: 0.85rem;
+    padding: 0.95rem 1rem;
+    outline: none;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  }
+
+  .field:focus {
+    border-color: rgba(255,255,255,0.34);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .button-strong {
+    background: #e8e8e8;
+    color: #101010;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-weight: 600;
+    transition: transform 160ms ease, opacity 160ms ease;
+  }
+
+  .button-strong:hover {
+    transform: translateY(-1px);
+  }
+
+  .button-soft {
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 0.95rem;
+    transition: transform 160ms ease, background 160ms ease;
+  }
+
+  .button-soft:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+  }
+}

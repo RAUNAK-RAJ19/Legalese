@@ -1,0 +1,71 @@
+Product Requirements Document (PRD) — Legalese
+
+1. Overview
+- Purpose: Provide clear product goals, scope, and requirements for the Legalese project (backend + frontend document Q&A assistant).
+- Audience: Engineering, Product, Design, QA, and stakeholders.
+
+2. Problem Statement
+- Legal teams need a fast way to ingest, search, and summarize legal documents (PDFs) and get risk/summary answers.
+
+3. Goals & Success Metrics
+- Goals:
+  - Reliable document ingestion and secure storage.
+  - High-quality embeddings and relevant answer retrieval.
+  - Fast, accurate summaries and risk highlighting.
+- Success metrics:
+  - Document ingestion throughput: X docs/hour (baseline: 50).
+  - Retrieval precision@5 ≥ 0.8 on test corpus.
+  - Average answer latency < 2s (query path).
+  - User satisfaction ≥ 4/5 in pilot.
+
+4. Scope
+- In-scope:
+  - PDF upload, processing, OCR fallback, text extraction.
+  - Vector store, embeddings, similarity search, and QA API.
+  - Authenticated user access, per-user storage and privacy.
+- Out-of-scope (v1):
+  - Enterprise SSO, advanced role-based access, on-prem installers.
+
+5. Key User Stories
+- As a lawyer, I can upload a PDF and get a searchable embedding set.
+- As a reviewer, I can query the document and receive an excerpted answer with citations.
+- As an admin, I can see ingestion status and retry failed uploads.
+
+6. Functional Requirements
+- Upload endpoint that stores originals and extracted text.
+- Processing pipeline: extract → chunk → embed → index.
+- QA endpoint: query → retrieve → synthesize answer + source citations.
+- User management: sign up/login, per-user document isolation.
+
+7. Non-Functional Requirements
+- Security: encryption at rest for stored PDFs, TLS in transit.
+- Reliability: retries for ingestion failures; simple monitoring & health checks.
+- Scalability: stateless API workers + scalable vector DB.
+
+8. Data & Privacy
+- Store only user-owned documents; support deletion on request.
+- Redact or avoid storing sensitive PII in embeddings; document purge workflow.
+
+9. Dependencies
+- Embedding provider (cloud or self-hosted), vector DB (Chroma/external), OCR library, cloud storage.
+
+10. Timeline & Milestones (example)
+- Week 1: Ingestion + storage + basic UI for uploads.
+- Week 2: Embeddings pipeline + vector indexing.
+- Week 3: QA API + frontend query UI + basic auth.
+- Week 4: Pilot, metrics, and improvements.
+
+11. Stakeholders
+- Product owner: (you)
+- Lead engineer: (TBD)
+- Designer/UX: (TBD)
+
+12. Risks & Mitigations
+- Embedding cost: evaluate open-source alternatives and batching.
+- Accuracy: build evaluation set and tune chunking/embedding parameters.
+
+13. Open Questions
+- Preferred embedding provider and cost constraints?
+- Required retention/purge policy for documents?
+
+Appendix: Contact the team for clarifications and attach sample test documents for evaluation.
